@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:difx="http://schemas.microsoft.com/wix/DifxAppExtension">
+
+  <?ifdef QXLWDDMDOD64Bit ?>
+    <?define QXLWDDMDODPlatform=x64 ?>
+    <?define QXLWDDMDODProgramFilesFolder= ProgramFiles64Folder ?>
+    <?define QXLWDDMDODWin64= yes ?>
+  <?else?>
+    <?define QXLWDDMDODPlatform=x86 ?>
+    <?define QXLWDDMDODProgramFilesFolder= ProgramFilesFolder ?>
+    <?define QXLWDDMDODWin64= no ?>
+  <?endif?>
+
+  <Product
+    Name="Red Hat QXL controller"
+    Id="*"
+    UpgradeCode="{927D55E7-9B82-4BD4-B778-B0F7665DE2C9}"
+    Manufacturer="Red Hat, Inc."
+    Version="$(var.QXLWDDMDODVersion)"
+    Language="1033">
+    <Package
+      Manufacturer="Red Hat, Inc."
+      InstallerVersion="200"
+      Languages="1033"
+      Platform="$(var.QXLWDDMDODPlatform)"
+      Compressed="yes"
+      InstallScope="perMachine"
+      InstallPrivileges="elevated" />
+
+    <Property Id="WIN10FOUND" Secure="yes">
+      <DirectorySearch Id="searchSystem" Path="[SystemFolder]" Depth="0">
+        <FileSearch Id="searchFile" Name="advapi32.dll" MinVersion="6.3.10000.0"/>
+      </DirectorySearch>
+    </Property>
+
+    <?if $(var.QXLWDDMDODPlatform) = x86 ?>
+      <Condition Message="Error: 32-bit version of QXL-WDDM-DOD can not be installed on 64-bit Windows.">
+          <![CDATA[Not VersionNT64]]>
+      </Condition>
+    <?endif?>
+
+    <Condition Message="QXL-WDDM-DOD is only supported on Windows 10 or higher systems.">
+      <![CDATA[Installed OR (VersionNT = 603 AND WIN10FOUND) OR (VersionNT > 603)]]>
+    </Condition>
+
+    <Media Id="1" Cabinet="QXLWDDMDOD$(var.QXLWDDMDODVersion).cab" EmbedCab="yes" />
+
+    <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+    <Upgrade Id="{927D55E7-9B82-4BD4-B778-B0F7665DE2C9}">
+      <UpgradeVersion
+        Minimum="0.0.0.0" Maximum="$(var.QXLWDDMDODVersion)"
+        Property="PREVIOUSVERSIONSINSTALLED"
+        IncludeMinimum="yes" IncludeMaximum="no" />
+
+      <UpgradeVersion
+        Minimum="$(var.QXLWDDMDODVersion)" Maximum="99.99.99.99"
+        Property="NEWERVERSIONINSTALLED"
+        IncludeMinimum="no" IncludeMaximum="yes" />
+    </Upgrade>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="$(var.QXLWDDMDODProgramFilesFolder)">
+        <Directory Id="MANUFACTURERFOLDER" Name="Red Hat">
+          <Directory Id="QXLWDDMDOD_Directory" Name="QXL-WDDM-DOD">
+
+            <Component Id="QXLWDDMDOD_10" Guid="{D43599C0-6EDF-43EC-9BE1-2FCD95DBA4EC}" Win64="$(var.QXLWDDMDODWin64)">
+                <File Id="qxldod.sys" Name="qxldod.sys" Source="qxldod.sys" Vital="yes" KeyPath="yes" DiskId="1" ProcessorArchitecture="$(var.QXLWDDMDODPlatform)"/>
+                <File Id="qxldod.inf" Name="qxldod.inf" Source="qxldod.inf" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="$(var.QXLWDDMDODPlatform)"/>
+                <File Id="qxldod.cat" Name="qxldod.cat" Source="qxldod.cat" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="$(var.QXLWDDMDODPlatform)"/>
+                <File Id="qxldod.pdb" Name="qxldod.pdb" Source="qxldod.pdb" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="$(var.QXLWDDMDODPlatform)"/>
+                <difx:Driver AddRemovePrograms="no" PlugAndPlayPrompt="no" />
+            </Component>
+
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <CustomAction Id="PreventDowngrading"
+              Error="Error: Newer version of QXL-WDDM-DOD is already installed.">
+    </CustomAction>
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallInitialize">PREVIOUSVERSIONSINSTALLED&lt;&gt;""</RemoveExistingProducts>
+      <Custom Action="PreventDowngrading" After="FindRelatedProducts">NEWERVERSIONINSTALLED&lt;&gt;"" AND NOT Installed</Custom>
+    </InstallExecuteSequence>
+
+    <Feature Id="ProductFeature" Title="QXLWDDMDOD" Level="1">
+      <ComponentRef Id="QXLWDDMDOD_10" />
+    </Feature>
+
+  </Product>
+</Wix>
