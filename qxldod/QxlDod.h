@@ -19,8 +19,8 @@
 #define BITS_PER_BYTE              8
 
 #define POINTER_SIZE               64
-#define MIN_WIDTH_SIZE             800
-#define MIN_HEIGHT_SIZE            600
+#define MIN_WIDTH_SIZE             320
+#define MIN_HEIGHT_SIZE            200
 #define INITIAL_WIDTH              1024
 #define INITIAL_HEIGHT             768
 #define QXL_BPP                    32
