@@ -557,7 +557,31 @@ NTSTATUS QxlDod::SetPointerPosition(_In_ CONST DXGKARG_SETPOINTERPOSITION* pSetP
 
     QXL_ASSERT(pSetPointerPosition != NULL);
     QXL_ASSERT(pSetPointerPosition->VidPnSourceId < MAX_VIEWS);
-
+    DXGKARG_SETPOINTERPOSITION adjusted;
+    if (m_CurrentModes[pSetPointerPosition->VidPnSourceId].Rotation == D3DKMDT_VPPR_ROTATE90)
+    {
+        adjusted = *pSetPointerPosition;
+        adjusted.Y = m_CurrentModes[pSetPointerPosition->VidPnSourceId].SrcModeHeight - pSetPointerPosition->X;
+        adjusted.X = pSetPointerPosition->Y;
+        DbgPrint(TRACE_LEVEL_INFORMATION, ("%s: src %d,%d -> %d,%d\n", __FUNCTION__,
+            pSetPointerPosition->X, pSetPointerPosition->Y,
+            adjusted.X, adjusted.Y));
+        pSetPointerPosition = &adjusted;
+    }
+    else if (m_CurrentModes[pSetPointerPosition->VidPnSourceId].Rotation == D3DKMDT_VPPR_ROTATE180)
+    {
+        adjusted = *pSetPointerPosition;
+        adjusted.Y = m_CurrentModes[pSetPointerPosition->VidPnSourceId].SrcModeHeight - pSetPointerPosition->Y;
+        adjusted.X = m_CurrentModes[pSetPointerPosition->VidPnSourceId].SrcModeWidth - pSetPointerPosition->X;
+        pSetPointerPosition = &adjusted;
+    }
+    else if (m_CurrentModes[pSetPointerPosition->VidPnSourceId].Rotation == D3DKMDT_VPPR_ROTATE270)
+    {
+        adjusted = *pSetPointerPosition;
+        adjusted.Y = pSetPointerPosition->X;
+        adjusted.X = m_CurrentModes[pSetPointerPosition->VidPnSourceId].SrcModeWidth - pSetPointerPosition->Y;
+        pSetPointerPosition = &adjusted;
+    }
     return m_pHWDevice->SetPointerPosition(pSetPointerPosition);
 }
 
