@@ -1299,8 +1299,8 @@ NTSTATUS QxlDod::EnumVidPnCofuncModality(_In_ CONST DXGKARG_ENUMVIDPNCOFUNCMODAL
                 LocalVidPnPresentPath.ContentTransformation.RotationSupport.Identity = 1;
                 // Sample supports only Rotate90
                 LocalVidPnPresentPath.ContentTransformation.RotationSupport.Rotate90 = 1;
-                LocalVidPnPresentPath.ContentTransformation.RotationSupport.Rotate180 = 0;
-                LocalVidPnPresentPath.ContentTransformation.RotationSupport.Rotate270 = 0;
+                LocalVidPnPresentPath.ContentTransformation.RotationSupport.Rotate180 = 1;
+                LocalVidPnPresentPath.ContentTransformation.RotationSupport.Rotate270 = 1;
                 SupportFieldsModified = TRUE;
             }
         } // End: ROTATION
@@ -1639,6 +1639,8 @@ NTSTATUS QxlDod::SetSourceModeAndPath(CONST D3DKMDT_VIDPN_SOURCE_MODE* pSourceMo
              if (pCurrentBddMode->DispInfo.Width == pModeInfo->VisScreenWidth &&
                  pCurrentBddMode->DispInfo.Height == pModeInfo->VisScreenHeight )
              {
+                 DbgPrint(TRACE_LEVEL_INFORMATION, ("%s: %dx%d, rotation %d\n", __FUNCTION__,
+                     pCurrentBddMode->SrcModeHeight, pCurrentBddMode->SrcModeWidth, pCurrentBddMode->Rotation));
                  Status = m_pHWDevice->SetCurrentMode(m_pHWDevice->GetModeNumber(ModeIndex));
                  if (NT_SUCCESS(Status))
                  {
@@ -1684,6 +1686,8 @@ NTSTATUS QxlDod::IsVidPnPathFieldsValid(CONST D3DKMDT_VIDPN_PRESENT_PATH* pPath)
     }
     else if ((pPath->ContentTransformation.Rotation != D3DKMDT_VPPR_IDENTITY) &&
              (pPath->ContentTransformation.Rotation != D3DKMDT_VPPR_ROTATE90) &&
+             (pPath->ContentTransformation.Rotation != D3DKMDT_VPPR_ROTATE180) &&
+             (pPath->ContentTransformation.Rotation != D3DKMDT_VPPR_ROTATE270) &&
              (pPath->ContentTransformation.Rotation != D3DKMDT_VPPR_NOTSPECIFIED) &&
              (pPath->ContentTransformation.Rotation != D3DKMDT_VPPR_UNINITIALIZED))
     {
