@@ -1,7 +1,12 @@
+Version 0.20
+	Add lower resolutions
+	Allow all 4 screen orientations
+	Add WIX installer scripts
+
 Version 0.19
     Add ETW logging for release version
     Installation on Win8 and later only
-    Add 800x800 resolution
+    Add 800x600 resolution
     Improve performance vs spice server 14.0 and earlier
     Fix black screen on driver uninstall on OVMF platforms
     Fix black screen on return from S3
