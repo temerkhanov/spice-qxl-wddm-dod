@@ -192,7 +192,7 @@
       <Command>Inf2Cat /driver:$(OutDir) /os:8_X86,6_3_X86</Command>
     </PostBuildEvent>
     <Inf>
-      <EnableVerbose>true</EnableVerbose>
+      <EnableVerbose>false</EnableVerbose>
       <KmdfVersionNumber>
       </KmdfVersionNumber>
       <UmdfVersionNumber>
@@ -264,7 +264,7 @@
       <Command>Inf2Cat /driver:$(OutDir) /os:8_X64,Server8_X64,Server6_3_X64,6_3_X64</Command>
     </PostBuildEvent>
     <Inf>
-      <EnableVerbose>true</EnableVerbose>
+      <EnableVerbose>false</EnableVerbose>
       <KmdfVersionNumber>
       </KmdfVersionNumber>
       <UmdfVersionNumber>
