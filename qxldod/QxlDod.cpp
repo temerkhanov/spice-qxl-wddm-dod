@@ -134,6 +134,7 @@ NTSTATUS QxlDod::CheckHardware()
         Header.DeviceID == 0x0100 &&
         Header.RevisionID >= 4)
     {
+        m_Revision = Header.RevisionID;
         Status = STATUS_SUCCESS;
     }
 
@@ -4795,7 +4796,8 @@ NTSTATUS QxlDevice::HWClose(void)
 {
     PAGED_CODE();
     QxlClose();
-    if (m_bUefiMode)
+    /* QXL device rev 5+ requires explicit reset to switch to VGA mode */
+    if (m_bUefiMode || m_pQxlDod->Revision() > 4)
     {
         DbgPrint(TRACE_LEVEL_INFORMATION, ("%s: Resetting the device\n", __FUNCTION__));
         WRITE_PORT_UCHAR((PUCHAR)(m_IoBase + QXL_IO_RESET), 0);

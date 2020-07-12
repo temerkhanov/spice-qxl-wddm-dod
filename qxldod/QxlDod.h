@@ -720,6 +720,7 @@ private:
     KTIMER m_VsyncTimer;
     KDPC   m_VsyncTimerDpc;
     BOOLEAN m_bVsyncEnabled;
+    UCHAR m_Revision = 0;
     LONG m_VsyncFiredCounter;
 public:
     QxlDod(_In_ DEVICE_OBJECT* pPhysicalDeviceObject);
@@ -819,6 +820,7 @@ public:
         return m_DxgkInterface.DxgkCbAcquirePostDisplayOwnership(m_DxgkInterface.DeviceHandle, &DispInfo);
     }
     VOID EnableVsync(BOOLEAN bEnable);
+    UCHAR Revision() const { return m_Revision; }
 private:
     VOID CleanUp(VOID);
     NTSTATUS CheckHardware();
