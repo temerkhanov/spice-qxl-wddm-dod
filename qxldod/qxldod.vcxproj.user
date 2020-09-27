@@ -3,13 +3,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Release|x64'">
     <SignMode>Off</SignMode>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Release|ARM64'">
+    <SignMode>Off</SignMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Release|ARM'">
+    <SignMode>Off</SignMode>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Release|Win32'">
     <SignMode>Off</SignMode>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Debug_NoSign|x64'">
     <SignMode>Off</SignMode>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Debug_NoSign|ARM64'">
+    <SignMode>Off</SignMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Debug_NoSign|ARM'">
+    <SignMode>Off</SignMode>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Debug_NoSign|Win32'">
     <SignMode>Off</SignMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10Debug|ARM64'">
+    <TestCertificate>CN="WDKTestCert Temerkhanov,132456194573839411" | ABF6FAA979DA63867FB3DC815B7283A44B10884E</TestCertificate>
   </PropertyGroup>
 </Project>
