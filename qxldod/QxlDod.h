@@ -123,37 +123,6 @@ typedef struct
 
 #pragma pack(pop)
 
-typedef struct _X86BIOS_REGISTERS    // invented names
-{
-    ULONG Eax;
-    ULONG Ecx;
-    ULONG Edx;
-    ULONG Ebx;
-    ULONG Ebp;
-    ULONG Esi;
-    ULONG Edi;
-    USHORT SegDs;
-    USHORT SegEs;
-} X86BIOS_REGISTERS, *PX86BIOS_REGISTERS;
-
-/*  Undocumented imports from the HAL  */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-NTHALAPI BOOLEAN x86BiosCall (ULONG, PX86BIOS_REGISTERS);
-
-NTHALAPI NTSTATUS x86BiosAllocateBuffer (ULONG *, USHORT *, USHORT *);
-NTHALAPI NTSTATUS x86BiosFreeBuffer (USHORT, USHORT);
-
-NTHALAPI NTSTATUS x86BiosReadMemory (USHORT, USHORT, PVOID, ULONG);
-NTHALAPI NTSTATUS x86BiosWriteMemory (USHORT, USHORT, PVOID, ULONG);
-
-#ifdef __cplusplus
-}
-#endif
-
 struct DoPresentMemory
 {
     PVOID                     DstAddr;
@@ -320,45 +289,6 @@ protected:
     PUSHORT m_ModeNumbers;
     USHORT m_CurrentMode;
     ULONG  m_Id;
-};
-
-class VgaDevice  :
-    public HwDeviceInterface
-{
-public:
-    VgaDevice(_In_ QxlDod* pQxlDod);
-    ~VgaDevice(void);
-    NTSTATUS QueryCurrentMode(PVIDEO_MODE RequestedMode);
-    NTSTATUS SetCurrentMode(ULONG Mode);
-    NTSTATUS GetCurrentMode(ULONG* Mode);
-    NTSTATUS SetPowerState(DEVICE_POWER_STATE DevicePowerState, DXGK_DISPLAY_INFORMATION* pDispInfo);
-    NTSTATUS HWInit(PCM_RESOURCE_LIST pResList, DXGK_DISPLAY_INFORMATION* pDispInfo);
-    NTSTATUS HWClose(void);
-    NTSTATUS ExecutePresentDisplayOnly(_In_ BYTE*             DstAddr,
-                                 _In_ UINT              DstBitPerPixel,
-                                 _In_ BYTE*             SrcAddr,
-                                 _In_ UINT              SrcBytesPerPixel,
-                                 _In_ LONG              SrcPitch,
-                                 _In_ ULONG             NumMoves,
-                                 _In_ D3DKMT_MOVE_RECT* pMoves,
-                                 _In_ ULONG             NumDirtyRects,
-                                 _In_ RECT*             pDirtyRect,
-                                 _In_ D3DKMDT_VIDPN_PRESENT_PATH_ROTATION Rotation,
-                                 _In_ const CURRENT_BDD_MODE* pModeCur);
-    VOID BlackOutScreen(CURRENT_BDD_MODE* pCurrentBddMod);
-    QXL_NON_PAGED BOOLEAN InterruptRoutine(_In_ PDXGKRNL_INTERFACE pDxgkInterface, _In_  ULONG MessageNumber);
-    QXL_NON_PAGED VOID DpcRoutine(PVOID);
-    QXL_NON_PAGED VOID ResetDevice(VOID);
-    QXL_NON_PAGED VOID VSyncInterruptPostProcess(_In_ PDXGKRNL_INTERFACE);
-    NTSTATUS AcquireFrameBuffer(CURRENT_BDD_MODE* pCurrentBddMode);
-    NTSTATUS ReleaseFrameBuffer(CURRENT_BDD_MODE* pCurrentBddMode);
-    NTSTATUS SetPointerShape(_In_ CONST DXGKARG_SETPOINTERSHAPE* pSetPointerShape);
-    NTSTATUS SetPointerPosition(_In_ CONST DXGKARG_SETPOINTERPOSITION* pSetPointerPosition);
-    NTSTATUS Escape(_In_ CONST DXGKARG_ESCAPE* pEscap);
-protected:
-    NTSTATUS GetModeList(DXGK_DISPLAY_INFORMATION* pDispInfo);
-private:
-    BOOL SetVideoModeInfo(UINT Idx, PVBE_MODEINFO pModeInfo);
 };
 
 typedef struct _MemSlot {
