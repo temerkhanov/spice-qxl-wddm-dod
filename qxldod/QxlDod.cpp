@@ -2178,37 +2178,37 @@ QXL_NON_PAGED
 BYTE* GetRowStart(_In_ CONST BLT_INFO* pBltInfo, CONST RECT* pRect)
 {
     BYTE* pRet = NULL;
-    LONG OffLeft = pRect->left + pBltInfo->Offset.x;
+    LONG OffLeft =pRect->left + pBltInfo->Offset.x;
     LONG OffTop = pRect->top + pBltInfo->Offset.y;
     LONG BytesPerPixel = (pBltInfo->BitsPerPel / BITS_PER_BYTE);
     switch (pBltInfo->Rotation)
     {
         case D3DKMDT_VPPR_IDENTITY:
         {
-            pRet = ((BYTE*)pBltInfo->pBits +
-                           OffTop * pBltInfo->Pitch +
-                           OffLeft * BytesPerPixel);
+            pRet = (BYTE*)pBltInfo->pBits +
+                          (SSIZE_T)OffTop * pBltInfo->Pitch +
+                          (SSIZE_T)OffLeft * BytesPerPixel;
             break;
         }
         case D3DKMDT_VPPR_ROTATE90:
         {
-            pRet = ((BYTE*)pBltInfo->pBits +
-                           (pBltInfo->Height - 1 - OffLeft) * pBltInfo->Pitch +
-                           OffTop * BytesPerPixel);
+            pRet = (BYTE*)pBltInfo->pBits +
+                          ((SSIZE_T)pBltInfo->Height - 1 - OffLeft) * pBltInfo->Pitch +
+                           (SSIZE_T)OffTop * BytesPerPixel;
             break;
         }
         case D3DKMDT_VPPR_ROTATE180:
         {
-            pRet = ((BYTE*)pBltInfo->pBits +
-                           (pBltInfo->Height - 1 - OffTop) * pBltInfo->Pitch +
-                           (pBltInfo->Width - 1 - OffLeft) * BytesPerPixel);
+            pRet = (BYTE*)pBltInfo->pBits +
+                          ((SSIZE_T)pBltInfo->Height - 1 - OffTop) * pBltInfo->Pitch +
+                          ((SSIZE_T)pBltInfo->Width - 1 - OffLeft) * BytesPerPixel;
             break;
         }
         case D3DKMDT_VPPR_ROTATE270:
         {
-            pRet = ((BYTE*)pBltInfo->pBits +
-                           OffLeft * pBltInfo->Pitch +
-                           (pBltInfo->Width - 1 - OffTop) * BytesPerPixel);
+            pRet = (BYTE*)pBltInfo->pBits +
+                          (SSIZE_T)OffLeft * pBltInfo->Pitch +
+                          ((SSIZE_T)pBltInfo->Width - 1 - OffTop) * BytesPerPixel;
             break;
         }
         default:
@@ -2358,11 +2358,11 @@ VOID CopyBits32_32(
         UINT NumRows = pRect->bottom - pRect->top;
         UINT BytesToCopy = NumPixels * 4;
         BYTE* pStartDst = ((BYTE*)pDst->pBits +
-                          (pRect->top + pDst->Offset.y) * pDst->Pitch +
-                          (pRect->left + pDst->Offset.x) * 4);
+                          ((SSIZE_T)pRect->top + pDst->Offset.y) * pDst->Pitch +
+                          ((SSIZE_T)pRect->left + pDst->Offset.x) * 4);
         CONST BYTE* pStartSrc = ((BYTE*)pSrc->pBits +
-                                (pRect->top + pSrc->Offset.y) * pSrc->Pitch +
-                                (pRect->left + pSrc->Offset.x) * 4);
+                                ((SSIZE_T)pRect->top + pSrc->Offset.y) * pSrc->Pitch +
+                                ((SSIZE_T)pRect->left + pSrc->Offset.x) * 4);
 
         for (UINT i = 0; i < NumRows; ++i)
         {
@@ -2435,6 +2435,23 @@ QxlDevice::QxlDevice(_In_ QxlDod* pQxlDod)
     m_PresentThread = NULL;
     m_bActive = FALSE;
     m_bUefiMode = IsUefiMode();
+    m_CmdLock = { };
+    m_CommandRing = NULL;
+    m_CrsLock = { };
+    m_CursorEvent = { };
+    m_CursorRing = NULL;
+    m_DisplayEvent = { };
+    m_DrawGeneration = 0;
+    m_InitialDisplayInfo = { };
+    m_IoBase = NULL;
+    m_IoCmdEvent = { };
+    m_IoLock = { };
+    m_IoMapped = FALSE;
+    m_IoSize = 0;
+    m_LogBuf = NULL;
+    m_LogPort = NULL;
+    m_MemLock = { };
+    RtlZeroMemory(m_MemSlots, sizeof(m_MemSlots));
     DbgPrint(TRACE_LEVEL_VERBOSE, ("%s, %s mode\n", __FUNCTION__, m_bUefiMode ? "UEFI" : "BIOS"));
 }
 
@@ -2656,7 +2673,7 @@ NTSTATUS QxlDevice::SetCurrentMode(ULONG Mode)
             KEVENT finishEvent;
             KeInitializeEvent(&finishEvent, SynchronizationEvent, FALSE);
             ++m_DrawGeneration;
-            QxlPresentOperation *operation = BuildQxlOperation([=, this, &finishEvent]() {
+            QxlPresentOperation *operation = BuildQxlOperation([=, &finishEvent]() {
                 PAGED_CODE();
                 DestroyPrimarySurface();
                 CreatePrimarySurface(&m_ModeInfo[idx]);
@@ -3117,9 +3134,9 @@ void QxlDevice::SetupMemSlot(UINT8 Idx, UINT64 pastart, UINT64 paend, UINT8 *vas
 
     SetupHWSlot(Idx + 1, pSlot);
 
-    high_bits = slot_index << m_SlotGenBits;
+    high_bits = (UINT64)slot_index << m_SlotGenBits;
     high_bits |= m_RomHdr->slot_generation;
-    high_bits <<= (64 - (m_SlotGenBits + m_SlotIdBits));
+    high_bits <<= (64 - ((UINT64)m_SlotGenBits + m_SlotIdBits));
     pSlot->high_bits = high_bits;
     DbgPrint(TRACE_LEVEL_VERBOSE, ("<--- %s\n", __FUNCTION__));
 }
@@ -3128,7 +3145,7 @@ BOOL QxlDevice::CreateMemSlots(void)
 {
     PAGED_CODE();
     DbgPrint(TRACE_LEVEL_VERBOSE, ("---> %s 3\n", __FUNCTION__));
-    UINT64 len = m_RomHdr->surface0_area_size + m_RomHdr->num_pages * PAGE_SIZE;
+    UINT64 len = m_RomHdr->surface0_area_size + (SIZE_T)m_RomHdr->num_pages * PAGE_SIZE;
     SetupMemSlot(m_MainMemSlot,
                  (UINT64)m_RamPA.QuadPart, 
                  (UINT64)(m_RamPA.QuadPart + len),
@@ -3148,7 +3165,7 @@ void QxlDevice::InitDeviceMemoryResources(void)
 {
     PAGED_CODE();
     DbgPrint(TRACE_LEVEL_VERBOSE, ("---> %s num_pages = %d\n", __FUNCTION__, m_RomHdr->num_pages));
-    InitMspace(MSPACE_TYPE_DEVRAM, (m_RamStart + m_RomHdr->surface0_area_size), (size_t)(m_RomHdr->num_pages * PAGE_SIZE));
+    InitMspace(MSPACE_TYPE_DEVRAM, m_RamStart + m_RomHdr->surface0_area_size, (SIZE_T)m_RomHdr->num_pages * PAGE_SIZE);
     InitMspace(MSPACE_TYPE_VRAM, m_VRamStart, m_VRamSize);
     DbgPrint(TRACE_LEVEL_VERBOSE, ("<--- %s\n", __FUNCTION__));
 }
@@ -3156,7 +3173,7 @@ void QxlDevice::InitDeviceMemoryResources(void)
 NTSTATUS QxlDevice::InitMonitorConfig(void)
 {
     PAGED_CODE();
-    size_t config_size = sizeof(QXLMonitorsConfig) + sizeof(QXLHead);
+    SIZE_T config_size = sizeof(QXLMonitorsConfig) + sizeof(QXLHead);
     m_monitor_config = (QXLMonitorsConfig*) AllocMem(MSPACE_TYPE_DEVRAM, config_size, TRUE);
     if (m_monitor_config) {
         RtlZeroMemory(m_monitor_config, config_size);
@@ -3204,7 +3221,7 @@ QxlDevice::ExecutePresentDisplayOnly(
 
     NTSTATUS Status = STATUS_SUCCESS;
 
-    QXLDrawable **pDrawables = new (NonPagedPoolNx) QXLDrawable *[NumDirtyRects + NumMoves + 1];
+    QXLDrawable **pDrawables = new (NonPagedPoolNx) QXLDrawable *[(SIZE_T)NumDirtyRects + NumMoves + 1];
     UINT nIndex = 0;
 
     if (!pDrawables)
@@ -3310,7 +3327,7 @@ QxlDevice::ExecutePresentDisplayOnly(
     }
 
     uint16_t currentGeneration = m_DrawGeneration;
-    QxlPresentOperation *operation = BuildQxlOperation([=, this]() {
+    QxlPresentOperation *operation = BuildQxlOperation([=]() {
         PAGED_CODE();
         ULONG delayed = 0;
 
@@ -3859,7 +3876,7 @@ BOOLEAN QxlDevice::AttachNewBitmap(QXLDrawable *drawable, UINT8 *src, UINT8 *src
 {
     PAGED_CODE();
     LONG width, height;
-    size_t alloc_size;
+    SIZE_T alloc_size;
     UINT32 line_size;
     Resource *image_res;
     InternalImage *internal;
@@ -3872,7 +3889,7 @@ BOOLEAN QxlDevice::AttachNewBitmap(QXLDrawable *drawable, UINT8 *src, UINT8 *src
     line_size = width * 4;
 
     alloc_size = BITMAP_ALLOC_BASE + BITS_BUF_MAX - BITS_BUF_MAX % line_size;
-    alloc_size = MIN(BITMAP_ALLOC_BASE + height * line_size, alloc_size);
+    alloc_size = MIN(BITMAP_ALLOC_BASE + (SIZE_T)height * line_size, alloc_size);
     image_res = (Resource*)AllocMem(MSPACE_TYPE_VRAM, alloc_size, bForce);
 
     if (image_res) {
@@ -3904,9 +3921,9 @@ BOOLEAN QxlDevice::AttachNewBitmap(QXLDrawable *drawable, UINT8 *src, UINT8 *src
 
         DrawableAddRes(drawable, image_res);
         RELEASE_RES(image_res);
-        alloc_size = height * line_size;
+        alloc_size = (SIZE_T)height * line_size;
     } else if (!bForce) {
-        alloc_size = height * line_size;
+        alloc_size = (SIZE_T)height * line_size;
         // allocate delayed chunck for entire bitmap without limitation
         DelayedChunk *pChunk = (DelayedChunk *)new (PagedPool)BYTE[alloc_size + sizeof(DelayedChunk)];
         if (pChunk) {
@@ -3998,10 +4015,10 @@ QXLDrawable *QxlDevice::PrepareBltBits (
     CopyRect(&drawable->surfaces_rects[1], pRect);
 
     UINT8* src = (UINT8*)pSrc->pBits +
-        (pSourcePoint->y) * pSrc->Pitch +
-        (pSourcePoint->x * 4);
+        (SIZE_T)pSourcePoint->y * pSrc->Pitch +
+        (SIZE_T)pSourcePoint->x * 4;
     UINT8* src_end = src - pSrc->Pitch;
-    src += pSrc->Pitch * (height - 1);
+    src += (SIZE_T)pSrc->Pitch * ((SIZE_T)height - 1);
 
     if (!AttachNewBitmap(drawable, src, src_end, (INT)pSrc->Pitch, !g_bSupportVSync)) {
         DiscardDrawable(drawable);
@@ -4034,7 +4051,7 @@ BOOLEAN QxlDevice::PutBytesAlign(QXLDataChunk **chunk_ptr, UINT8 **now_ptr,
     QXLDataChunk *chunk = *chunk_ptr;
     UINT8 *now = *now_ptr;
     UINT8 *end = *end_ptr;
-    size_t maxAllocSize = BITS_BUF_MAX - BITS_BUF_MAX % size;
+    SIZE_T maxAllocSize = BITS_BUF_MAX - BITS_BUF_MAX % size;
     alloc_size = MIN(alloc_size, maxAllocSize);
     DbgPrint(TRACE_LEVEL_VERBOSE, ("---> %s\n", __FUNCTION__));
 
@@ -4199,9 +4216,9 @@ NTSTATUS  QxlDevice::SetPointerShape(_In_ CONST DXGKARG_SETPOINTERSHAPE* pSetPoi
     src = (UINT8*)pSetPointerShape->pPixels;
     now = chunk->data;
     end = (UINT8 *)res + CURSOR_ALLOC_SIZE;
-    src_end = src + (pSetPointerShape->Pitch * pSetPointerShape->Height * num_images);
+    src_end = src + (SIZE_T)pSetPointerShape->Pitch * pSetPointerShape->Height * num_images;
     for (; src != src_end; src += pSetPointerShape->Pitch) {
-        if (!PutBytesAlign(&chunk, &now, &end, src, line_size, PAGE_SIZE - PAGE_SIZE % line_size, NULL)) {
+        if (!PutBytesAlign(&chunk, &now, &end, src, line_size, (SIZE_T)PAGE_SIZE - PAGE_SIZE % line_size, NULL)) {
             // we have a chance to get here only with color cursor bigger than 45*45
             // and only if we modify this procedure to use non-forced allocation  
             DbgPrint(TRACE_LEVEL_ERROR, ("%s: failed to push part of shape\n", __FUNCTION__));

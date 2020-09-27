@@ -14,17 +14,17 @@
 #include "qxl_windows.h"
 #include "mspace.h"
 
-#define MAX_CHILDREN               1
-#define MAX_VIEWS                  1
-#define BITS_PER_BYTE              8
+constexpr auto MAX_CHILDREN = 1;
+constexpr auto MAX_VIEWS = 1;
+constexpr auto BITS_PER_BYTE = 8;
 
-#define POINTER_SIZE               64
-#define MIN_WIDTH_SIZE             320
-#define MIN_HEIGHT_SIZE            200
-#define INITIAL_WIDTH              1024
-#define INITIAL_HEIGHT             768
-#define QXL_BPP                    32
-#define VGA_BPP                    24
+constexpr auto POINTER_SIZE = 64;
+constexpr auto MIN_WIDTH_SIZE = 320;
+constexpr auto MIN_HEIGHT_SIZE = 200;
+constexpr auto INITIAL_WIDTH = 1024;
+constexpr auto INITIAL_HEIGHT = 768;
+constexpr auto QXL_BPP = 32;
+constexpr auto VGA_BPP = 24;
 
 #define QXL_NON_PAGED __declspec(code_seg(".text"))
 
@@ -146,7 +146,7 @@ struct DoPresentMemory
 typedef struct _BLT_INFO
 {
     PVOID pBits;
-    UINT Pitch;
+    ULONG Pitch;
     UINT BitsPerPel;
     POINT Offset; // To unrotated top-left of dirty rects
     D3DKMDT_VIDPN_PRESENT_PATH_ROTATION Rotation;
@@ -241,6 +241,7 @@ class QxlDod;
 
 class HwDeviceInterface {
 public:
+    HwDeviceInterface() : m_CurrentMode(0), m_Id(0), m_ModeCount(0), m_ModeInfo(NULL), m_ModeNumbers(NULL), m_pQxlDod(NULL) { };
     virtual ~HwDeviceInterface() {;}
     virtual NTSTATUS QueryCurrentMode(PVIDEO_MODE RequestedMode) = 0;
     virtual NTSTATUS SetCurrentMode(ULONG Mode) = 0;
@@ -433,8 +434,8 @@ typedef struct DpcCbContext {
     UINT32 data;
 } DPC_CB_CONTEXT,* PDPC_CB_CONTEXT;
 
-#define BITMAP_ALLOC_BASE (sizeof(Resource) + sizeof(InternalImage) + sizeof(QXLDataChunk))
-#define BITS_BUF_MAX (64 * 1024)
+constexpr auto BITMAP_ALLOC_BASE = sizeof(Resource) + sizeof(InternalImage) + sizeof(QXLDataChunk);
+constexpr auto BITS_BUF_MAX = 64ULL * 1024;
 #define MIN(x, y) (((x) <= (y)) ? (x) : (y))
 #define MAX(x, y) (((x) >= (y)) ? (x) : (y))
 #define ALIGN(a, b) (((a) + ((b) - 1)) & ~((b) - 1))
